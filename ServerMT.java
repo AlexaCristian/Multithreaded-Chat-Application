@@ -25,19 +25,19 @@ public class ServerMT implements Runnable {
             server = new ServerSocket(4444);
             pool = Executors.newCachedThreadPool();
             while (!done) {
+                Socket client = server.accept(); // Acceptă orice client
                 if (connections.size() >= 4) {
-                    Socket client = server.accept();
-                    PrintWriter out = new PrintWriter(client.getOutputStream(), true);
-                    out.println("Server is full. Please try again later.");
-                    client.close();
-                } else {
-                    Socket client = server.accept();
-                    ConnectionHandler handler = new ConnectionHandler(client);
-                    connections.add(handler);
-                    pool.execute(handler);
+                    // Serverul este plin, scoate primul client conectat pentru a face loc
+                    ConnectionHandler toBeRemoved = connections.get(0); // Alege primul client conectat
+
+                    toBeRemoved.shutDown("Server is full. You have been disconnected to make room for new connections."); // Deconectează clientul
                 }
+                // Procedează cu adăugarea noului client
+                ConnectionHandler handler = new ConnectionHandler(client);
+                connections.add(handler);
+                pool.execute(handler);
             }
-        } catch (Exception e) {
+        }catch (Exception e) {
             broadcast("Server is closing...");
             shutDown();
         }
